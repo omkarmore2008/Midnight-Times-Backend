@@ -1,3 +1,10 @@
 {% extends "base.html" %}
-
-
+{% if request.user.is_authenticated %}
+<form>
+    <div class="form-group">
+        <label for="exampleInputEmail1">Keyword</label>
+        <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter keyword">
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endif %}

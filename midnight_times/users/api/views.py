@@ -18,7 +18,7 @@ from midnight_times.users.models import SearchResult
 from midnight_times.users.models import User
 
 from .serializers import SearchKeywordSerializer
-from .serializers import UserSerializer, SearchKeywordSerializer
+from .serializers import UserSerializer
 
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", None)
 
@@ -47,16 +47,19 @@ class ArticleSearchAPIView(GenericViewSet):
     def search(self, request):
         request_data = request.data.copy()
         keyword = request_data.get("keyword", "Shree Ram")
-        url = f"https://newsapi.org/v2/everything?q={keyword}&sortBy=publishedAt&apiKey={NEWS_API_KEY}"
         instance, created = Keyword.objects.get_or_create(keyword=keyword, user=request.user)
         threshold_time = timezone.now() - instance.searched_at
         if not created:
             if threshold_time >= timedelta(minutes=15):
                 result = SearchResult.objects.get(keyword=instance).articles_list
                 return Response(result, status=status.HTTP_200_OK)
+        url = f"https://newsapi.org/v2/everything?q={keyword}&sortBy=publishedAt&from={instance.last_record_final_date}&apiKey={NEWS_API_KEY}"
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json()
             SearchResult.objects.get_or_create(keyword=instance, articles_list=data)
+            if "articles" in data and data["articles"]:
+                instance.last_record_final_date = data["articles"][0]["publishedAt"]
+                instance.save()
             return Response(data, status=status.HTTP_200_OK)
         return Response({"error": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)

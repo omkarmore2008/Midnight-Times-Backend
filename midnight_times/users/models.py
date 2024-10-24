@@ -42,7 +42,8 @@ class User(AbstractUser):
 class Keyword(models.Model):
     keyword = models.CharField(_("Keyword"), max_length=50)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    searched_at = models.DateTimeField(_("search At"), auto_now_add=True)
+    searched_at = models.DateTimeField(_("last_search At"), auto_now=True)
+    last_record_final_date = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.keyword
